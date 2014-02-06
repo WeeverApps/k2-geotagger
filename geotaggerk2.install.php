@@ -22,7 +22,7 @@
 *
 */
 
-class plgContentWeeverMapsInstallerScript
+class plgK2GeotaggerK2InstallerScript
 { 
 
 	public function install( $parent ) 
@@ -34,7 +34,7 @@ class plgContentWeeverMapsInstallerScript
 		$columnType      	= $db->nameQuote("type");
 		$columnEnabled   	= $db->nameQuote("enabled");
 		 
-		$db->setQuery("UPDATE $tableExtensions SET $columnEnabled=1 WHERE $columnElement='weevermapsk2' AND $columnType='plugin'");
+		$db->setQuery("UPDATE $tableExtensions SET $columnEnabled=1 WHERE $columnElement='geotaggerk2' AND $columnType='plugin'");
 		$db->query();
 		  
 	} 

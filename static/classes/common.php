@@ -25,85 +25,89 @@
 //todo: make friendly with WP
 defined('_JEXEC') or die;
 
-class geotaggerHelper {
+if ( !class_exists('geotaggerHelper') ) {
 
-	public static function geolocation_save_postdata( $post_id ) {
+	class geotaggerHelper {
 
-		if ( function_exists( CMS . '_before_geolocation_save_postdata' ) ) {
-			$is_okay = call_user_func( CMS . '_before_geolocation_save_postdata' );
-			if ( !$is_okay ) {
-				return $post_id;
+		public static function geolocation_save_postdata( $post_id ) {
+
+			if ( function_exists( CMS . '_before_geolocation_save_postdata' ) ) {
+				$is_okay = call_user_func( CMS . '_before_geolocation_save_postdata' );
+				if ( !$is_okay ) {
+					return $post_id;
+				}
 			}
+
+			$latitude = self::clean_coordinate($_POST['geolocation-latitude']);
+			$longitude = self::clean_coordinate($_POST['geolocation-longitude']);
+			$address = self::reverse_geocode($latitude, $longitude);
+			$pin_url = $_POST['geolocation-pin'];
+			$kml_url = $_POST['geolocation-url'];
+			$public = $_POST['geolocation-public'];
+			$on = $_POST['geolocation-on'];
+
+			if((self::clean_coordinate($latitude) != '') && (self::clean_coordinate($longitude)) != '') {
+				if ( function_exists( CMS . '_geolocation_save_postdata' ) ) {
+					call_user_func( CMS . '_geolocation_save_postdata', $post_id, $latitude, $longitude, $address, $pin_url, $kml_url, $public, $on );
+				}
+			}
+
+			return $post_id;
+
 		}
 
-		$latitude = self::clean_coordinate($_POST['geolocation-latitude']);
-		$longitude = self::clean_coordinate($_POST['geolocation-longitude']);
-		$address = self::reverse_geocode($latitude, $longitude);
-		$pin_url = $_POST['geolocation-pin'];
-		$kml_url = $_POST['geolocation-url'];
-		$public = $_POST['geolocation-public'];
-		$on = $_POST['geolocation-on'];
 
-		if((self::clean_coordinate($latitude) != '') && (self::clean_coordinate($longitude)) != '') {
-			if ( function_exists( CMS . '_geolocation_save_postdata' ) ) {
-				call_user_func( CMS . '_geolocation_save_postdata', $post_id, $latitude, $longitude, $address, $pin_url, $kml_url, $public, $on );
+		public static function reverse_geocode( $latitude, $longitude ) {
+
+			$url = "http://maps.google.com/maps/api/geocode/json?latlng=".$latitude.",".$longitude."&sensor=false";
+			$result = remote_get($url);
+			$json = json_decode($result['body']);
+			foreach ($json->results as $result)
+			{
+				foreach($result->address_components as $addressPart) {
+					if((in_array('locality', $addressPart->types)) && (in_array('political', $addressPart->types)))
+			    		$city = $addressPart->long_name;
+			    	else if((in_array('administrative_area_level_1', $addressPart->types)) && (in_array('political', $addressPart->types)))
+			    		$state = $addressPart->long_name;
+			    	else if((in_array('country', $addressPart->types)) && (in_array('political', $addressPart->types)))
+			    		$country = $addressPart->long_name;
+				}
 			}
-		}
-
-		return $post_id;
-
-	}
-
-
-	public static function reverse_geocode( $latitude, $longitude ) {
-
-		$url = "http://maps.google.com/maps/api/geocode/json?latlng=".$latitude.",".$longitude."&sensor=false";
-		$result = remote_get($url);
-		$json = json_decode($result['body']);
-		foreach ($json->results as $result)
-		{
-			foreach($result->address_components as $addressPart) {
-				if((in_array('locality', $addressPart->types)) && (in_array('political', $addressPart->types)))
-		    		$city = $addressPart->long_name;
-		    	else if((in_array('administrative_area_level_1', $addressPart->types)) && (in_array('political', $addressPart->types)))
-		    		$state = $addressPart->long_name;
-		    	else if((in_array('country', $addressPart->types)) && (in_array('political', $addressPart->types)))
-		    		$country = $addressPart->long_name;
-			}
-		}
-		
-		if(($city != '') && ($state != '') && ($country != ''))
-			$address = $city.', '.$state.', '.$country;
-		else if(($city != '') && ($state != ''))
-			$address = $city.', '.$state;
-		else if(($state != '') && ($country != ''))
-			$address = $state.', '.$country;
-		else if($country != '')
-			$address = $country;
 			
-		return $address;
+			if(($city != '') && ($state != '') && ($country != ''))
+				$address = $city.', '.$state.', '.$country;
+			else if(($city != '') && ($state != ''))
+				$address = $city.', '.$state;
+			else if(($state != '') && ($country != ''))
+				$address = $state.', '.$country;
+			else if($country != '')
+				$address = $country;
+				
+			return $address;
+
+		}
+
+		public static function clean_coordinate( $coordinate ) {
+
+			$pattern = '/^(\-)?(\d{1,3})\.(\d{1,15})/';
+			preg_match($pattern, $coordinate, $matches);
+			return $matches[0];
+
+		}
 
 	}
 
-	public static function clean_coordinate( $coordinate ) {
+	class GeolocationSettings {
 
-		$pattern = '/^(\-)?(\d{1,3})\.(\d{1,15})/';
-		preg_match($pattern, $coordinate, $matches);
-		return $matches[0];
+		public $map_width;
+		public $map_height;
+		public $default_zoom;
+		public $map_position;
+		public $show_custom_pin;
+		public $pin_url;
+		public $pin_shadow_url;
+		public $zoom_url;
 
 	}
-
-}
-
-class GeolocationSettings {
-
-	public $map_width;
-	public $map_height;
-	public $default_zoom;
-	public $map_position;
-	public $show_custom_pin;
-	public $pin_url;
-	public $pin_shadow_url;
-	public $zoom_url;
 
 }

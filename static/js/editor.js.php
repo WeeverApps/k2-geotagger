@@ -33,14 +33,21 @@ $zoom = 16;
 		<script type="text/javascript" src="http://www.google.com/jsapi"></script>
 		<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
 		<script type="text/javascript">
-		 	var $j = jQuery.noConflict();
+
+		 	var $j 				= jQuery.noConflict(),
+		 		$geotagger 		= {
+
+		 			map: 		null,
+		 			center: 	new google.maps.LatLng(0.0,0.0)
+
+		 		};
+
 			$j(function() {
 				$j(document).ready(function() {
 
 					<?php echo $jsFormInsert; /* only has value if form needs to be inserted with JS */ ?>
 
 				    var hasLocation = false;
-					var center = new google.maps.LatLng(0.0,0.0);
 					var on = 0;
 					var latitude = null, longitude = null;
 					<?php echo $jsMetaVar; ?>;
@@ -60,17 +67,17 @@ $zoom = 16;
 					if( $j.isArray(meta.geo) && !!meta.geo[0] ) {
 						longitude = meta.geo[0].longitude;
 						latitude = meta.geo[0].latitude;
-						center = new google.maps.LatLng(meta.geo[0].latitude, meta.geo[0].longitude);
+						$geotagger.center = new google.maps.LatLng(meta.geo[0].latitude, meta.geo[0].longitude);
 						hasLocation = true;
-						$j("#geolocation-latitude").val(center.lat());
-						$j("#geolocation-longitude").val(center.lng());
-						$j('#latlng').text( center.lat() + ', ' + center.lng() );
-						reverseGeocode(center);
+						$j("#geolocation-latitude").val($geotagger.center.lat());
+						$j("#geolocation-longitude").val($geotagger.center.lng());
+						$j('#latlng').text( $geotagger.center.lat() + ', ' + $geotagger.center.lng() );
+						reverseGeocode($geotagger.center);
 					}
 						
 				 	var myOptions = {
 				      'zoom': <?php echo $zoom; ?>,
-				      'center': center,
+				      'center': $geotagger.center,
 				      'mapTypeId': google.maps.MapTypeId.ROADMAP
 				    };
 				    var image = '<?php echo $settings->pin_url; ?>';
@@ -89,12 +96,12 @@ $zoom = 16;
 						new google.maps.Point(0, 0),
 						new google.maps.Point(12, 25));*/
 						
-				    var map = new google.maps.Map(document.getElementById('geolocation-map'), myOptions);
+				    $geotagger.map = new google.maps.Map(document.getElementById('geolocation-map'), myOptions);
 
 					var marker = new google.maps.Marker({
 
-						position: center, 
-						map: map, 
+						position: $geotagger.center, 
+						map: $geotagger.map, 
 						title:'Post Location',
 						icon: markerIcon
 	
@@ -102,17 +109,17 @@ $zoom = 16;
 					
 					if((!hasLocation) && (google.loader.ClientLocation)) {
 
-				      center = new google.maps.LatLng(google.loader.ClientLocation.latitude, google.loader.ClientLocation.longitude);
-				      reverseGeocode(center);
+				      $geotagger.center = new google.maps.LatLng(google.loader.ClientLocation.latitude, google.loader.ClientLocation.longitude);
+				      reverseGeocode($geotagger.center);
 
 				    }
 				    else if(!hasLocation) {
 
-				    	map.setZoom(1);
+				    	$geotagger.map.setZoom(1);
 
 				    }
 					
-					google.maps.event.addListener(map, 'click', function(event) {
+					google.maps.event.addListener($geotagger.map, 'click', function(event) {
 						placeMarker(event.latLng);
 					});
 					
@@ -153,11 +160,11 @@ $zoom = 16;
 
 					function placeMarker(location) {
 						marker.setPosition(location);
-						map.setCenter(location);
+						$geotagger.map.setCenter(location);
 						if((location.lat() != '') && (location.lng() != '')) {
 							$j("#geolocation-latitude").val(location.lat());
 							$j("#geolocation-longitude").val(location.lng());
-							$j('#latlng').text( center.lat() + ', ' + center.lng() );
+							$j('#latlng').text( $geotagger.center.lat() + ', ' + $geotagger.center.lng() );
 						}
 						
 						if(!customAddress)
@@ -171,7 +178,7 @@ $zoom = 16;
 								if (status == google.maps.GeocoderStatus.OK) {
 									placeMarker(results[0].geometry.location);
 									if(!hasLocation) {
-								    	map.setZoom(16);
+								    	$geotagger.map.setZoom(16);
 								    	hasLocation = true;
 									}
 								}

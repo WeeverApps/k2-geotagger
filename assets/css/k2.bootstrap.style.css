@@ -1,11 +1,11 @@
 #wx-geotagger-form {
-	padding-top: 1.091em;
+	padding-top: 0;
 }
 
 #wx-geotagger-form > label:nth-child(1),
 #wx-geotagger-form > label:nth-child(2) {
 	display: block;
-	margin: 1.091em 0;
+	margin:  13px 0;
 }
 
 #wx-geotagger-form input[type="url"],
@@ -27,9 +27,31 @@
 }
 
 #wx-geotagger-form .embed-container {
-	margin-top: 2.182em;
+	margin-top: 13px;
 	display: block;
 	clear: both;
+}
+
+#wx-geotagger-form #geotagger-on-off input[type="radio"] + label {
+	float: left;
+	margin-top: 2px
+}
+
+#wx-geotagger-form #geotagger-on-off input[type="radio"] {
+	float: left;
+	clear: left;
+	margin-right: 5px;
+}
+
+#wx-geotagger-form #geotagger-on-off >label:first-child {
+	float: none;
+	clear: both;
+}
+
+#wx-geotagger-form #geotagger-about {
+	display: block;
+	clear: both;
+	margin: 26px 0 0;
 }
 
 .screen-reader-text, #geotagger-about {

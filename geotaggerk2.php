@@ -32,11 +32,11 @@ jimport('joomla.plugin.plugin');
 
 JLoader::register( 'K2Plugin', JPATH_ADMINISTRATOR.DS.'components'.DS.'com_k2'.DS.'lib'.DS.'k2plugin.php' );
 
-require_once ( JPATH_PLUGINS.DS.'content'.DS.'weevermapsk2'.DS.'static'.DS.'classes'.DS.'common'.'.php' );
+require_once ( JPATH_PLUGINS.DS.'k2'.DS.'geotaggerk2'.DS.'static'.DS.'classes'.DS.'common'.'.php' );
 
-class plgContentWeeverMapsK2 extends K2Plugin {
+class plgK2GeotaggerK2 extends K2Plugin {
 
-	public 		$pluginName 				= "weevermapsk2";
+	public 		$pluginName 				= "geotaggerk2";
 	public 		$pluginNameHumanReadable;
 	public  	$pluginVersion 				= "1.0";
 	public		$pluginLongVersion 			= "Version 1.0 \"Leif Ericson\"";
@@ -66,16 +66,16 @@ class plgContentWeeverMapsK2 extends K2Plugin {
 		$this->joomlaVersion 	= substr($version->getShortVersion(), 0, 3);
 		
 		// kill this when not in correct context
-		if( !$app->isAdmin() || $option != "com_k2" )
+		if( !$app->isAdmin() || $option != "com_k2" || JRequest::getVar("view") != "item" )
 			return false;
 
 		$settings 	= $this->build_settings();
 		
-		JPlugin::loadLanguage('plg_content_'.$this->pluginName, JPATH_ADMINISTRATOR);
-		
+		JPlugin::loadLanguage('plg_k2_'.$this->pluginName, JPATH_ADMINISTRATOR);
+
 		$this->pluginNameHumanReadable = JText::_('WEEVERMAPSK2_PLG_NAME');
 		
-		if( $id = JRequest::getVar("id") ) {
+		if( $id = JRequest::getVar("cid") ) {
 
 			$this->getGeoData( $id );
 
@@ -86,38 +86,52 @@ class plgContentWeeverMapsK2 extends K2Plugin {
 
 		$jsMetaVar		= "var meta = " . $this->getJsMetaVar();
 		
-		// if Joomla less than v3
+
+		$jsFormInsert	= "
+
+			/* some dancing around for jQuery UI in K2 */
+			var tabLength = \$j('#k2Tabs ul.simpleTabsNavigation li').length;
+
+			\$j('<li id=\"tabGeotagger\" class=\"ui-state-default ui-corner-top\"><a href=\"#k2Tab' + tabLength + '\" id=\"k2TabGeotaggerA\">Geotagger</a></li>').appendTo('#k2Tabs ul.simpleTabsNavigation');
+
+			\$j('<div id=\"k2Tab'+ tabLength +'\" class=\"simpleTabsContent ui-tabs-panel ui-widget-content ui-corner-bottom ui-tabs-hide\"></div>').appendTo('#k2Tabs' ); 
+
+			\$j('#k2TabGeotagger').appendTo('#k2Tab'+ tabLength)
+
+			\$j('#geotagger-inner-hide').show();
+
+			\$j('a[href*=\"#k2Tab\"]').on('click', function(event) {
+
+				if( \$j(this).attr(\"href\") == \"#k2Tab\" + tabLength ) {
+
+					\$j(\"div.simpleTabsContent\").addClass('ui-tabs-hide');
+					\$j(\"#k2Tab\" + tabLength ).removeClass('ui-tabs-hide');
+					
+				} else \$j(\"#k2Tab\" + tabLength).addClass('ui-tabs-hide');
+
+				google.maps.event.trigger( \$geotagger.map,'resize' );
+				\$geotagger.map.setCenter( \$geotagger.center );
+
+				event.preventDefault();
+
+			});
+
+		";
+
+		$document->addStyleSheet( $root_url . '/plugins/k2/geotaggerk2/static/assets/css/style.css', 'text/css', null, array() );
+
 		if( $this->joomlaVersion[0] < 3 ) {
 
-			$document->addScript( "//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" );
-
-			$jsFormInsert	= "
-
-				\$j('#wx-geotagger-k2-panel').appendTo('#content-sliders-".$post_id."' ); 
-
-				\$j('#wx-geotagger-k2-panel').show();
-
-			"; 
+			$document->addStyleSheet( $root_url . '/plugins/k2/geotaggerk2/assets/css/k2.style.css', 'text/css', null, array() );
 
 		} else {
 
-			$jsFormInsert	= "
-
-				\$j('#geotagger').appendTo('#myTabContent' ); 
-
-				\$j('#geotagger-inner-hide').show();
-
-				\$j('<li><a data-toggle=\"tab\" href=\"#geotagger\">Geotagger</a></li>').appendTo('#myTabTabs');
-
-			";
+			$document->addStyleSheet( $root_url . '/plugins/k2/geotaggerk2/assets/css/k2.bootstrap.style.css', 'text/css', null, array() );
 
 		}
 
-		$document->addStyleSheet( $root_url . '/plugins/content/weevermapsk2/static/assets/css/style.css', 'text/css', null, array() );
-		$document->addStyleSheet( $root_url . '/plugins/content/weevermapsk2/assets/css/k2.style.css', 'text/css', null, array() );
-
-		require_once ( JPATH_PLUGINS.DS.'content'.DS.'weevermapsk2'.DS.'views'.DS.'k2.box.view.html.php' );
-		require_once ( JPATH_PLUGINS.DS.'content'.DS.'weevermapsk2'.DS.'static'.DS.'js'.DS.'editor.js.php' );
+		require_once ( JPATH_PLUGINS.DS.'k2'.DS.'geotaggerk2'.DS.'views'.DS.'k2.box.view.html.php' );
+		require_once ( JPATH_PLUGINS.DS.'k2'.DS.'geotaggerk2'.DS.'static'.DS.'js'.DS.'editor.js.php' );
 		
 
 		parent::__construct( $subject, $config );
@@ -185,7 +199,7 @@ class plgContentWeeverMapsK2 extends K2Plugin {
 
 	public function onAfterK2Save( &$item, $isNew ) {
 		
-		$_ds = ";";			
+		$_ds = ";";		
 		
 		$geoLatArray = 		explode( 	$_ds, rtrim( JRequest::getVar("geolocation-latitude"), 		$_ds) 	);
 		$geoLongArray = 	explode( 	$_ds, rtrim( JRequest::getVar("geolocation-longitude"), 	$_ds) 	);
@@ -211,19 +225,18 @@ class plgContentWeeverMapsK2 extends K2Plugin {
 			$query = " 	INSERT  ".
 					"	INTO	#__weever_maps ".
 					"	(component_id, component, location, address, label, marker) ".
-					"	VALUES ('".$item->id."', ".$db->Quote('com_k2').", 
+					"	VALUES (".$item->id.", ".$db->Quote('com_k2').", 
 							GeomFromText(' POINT(".$geoLatArray[$k]." ".$geoLongArray[$k].") '),
 							".$db->Quote($geoAddressArray[$k]).", 
 							".$db->Quote($geoLabelArray[$k]).", 
 							".$db->Quote($geoMarkerArray[$k]).")";
-						
 		
 			$db->setQuery($query);
 			$db->query();
 		
 		}
 		
-		if($kml = rtrim( JRequest::getVar("geolocation-url"), $_ds) )	{
+		if( $kml = rtrim( JRequest::getVar("geolocation-url"), $_ds) )	{
 			
 			$query = " 	INSERT  ".
 					"	INTO	#__weever_maps ".
@@ -299,19 +312,3 @@ class plgContentWeeverMapsK2 extends K2Plugin {
 
 
 
-/* Stupid trick to make this work in J3.0 and J2.5 */
-/*
-if (version_compare ( JVERSION, '3.0', '<' )) {
-  class plgContentWeeverMapsK2 extends plgContentWeeverMapsK2Intermed {
-   public function onContentAfterSave($context, &$article, $isNew) {
-   $this->onContentAfterSaveIntermed ( $context, $article, $isNew );
-  }
-}
-} else {
-  class plgContentWeeverMapsK2 extends plgContentWeeverMapsK2Intermed {
-   public function onContentAfterSave($context, $article, $isNew) {
-   $this->onContentAfterSaveIntermed ( $context, $article, $isNew );
-  }
-}
-}
-*/
