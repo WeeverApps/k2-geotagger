@@ -24,8 +24,7 @@
 
 class plgK2GeotaggerK2InstallerScript { 
 
-	public function install( $parent ) 
-	{ 
+	public function install( $parent ) 	{ 
 
 		$db 				= JFactory::getDbo();
 

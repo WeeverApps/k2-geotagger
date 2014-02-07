@@ -74,7 +74,7 @@ $zoom = 16;
 					//else
 					//	$j("#geolocation-public").attr('checked', true);
 					
-					if(meta.on == '0')
+					if(meta.on == 0)
 						disableGeo();
 					else
 						enableGeo();
@@ -127,7 +127,7 @@ $zoom = 16;
 	
 					});
 
-					if( !!meta.geo[0] && meta.geo[0].kml ) {
+					if( !!meta.geo && !!meta.geo[0] && meta.geo[0].kml ) {
 
 						$geotagger.addKmlLayer( meta.geo[0].kml );
 

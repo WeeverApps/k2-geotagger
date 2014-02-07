@@ -29,7 +29,7 @@
 	}*/
 
 ?>
-<div id="wx-geotagger-form">
+<div id="geotagger-form">
 
  <!-- start: geotagger interface -->
 
@@ -83,7 +83,7 @@
 
 		<label>Geotag a location for this item</label>
 		<div>
-			<input id="geolocation-enabled" name="geolocation-on" type="radio" value="1" />
+			<input id="geolocation-enabled" name="geolocation-on" type="radio" value="1" checked="checked" />
 			<label for="geolocation-enabled">Yes</label>
 		&nbsp;
 			<input id="geolocation-disabled" name="geolocation-on" type="radio" value="0" />

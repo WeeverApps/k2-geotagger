@@ -44,6 +44,7 @@ class plgK2GeotaggerK2 extends K2Plugin {
 	public  	$joomlaVersion;
 	public 		$marker_url;
 	public 		$default_marker_url;
+	public 		$kml_url;
 	
 	private		$geoData 					= null;
 	private		$inputString				= array(
