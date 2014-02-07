@@ -23,6 +23,9 @@
 */
 
 
+defined('_JEXEC') or die;
+
+
 /*	global $settings, $post;
 	if ( function_exists( CMS . '_before_geolocation_form' ) ) {
 		call_user_func( CMS . '_before_geolocation_form' );

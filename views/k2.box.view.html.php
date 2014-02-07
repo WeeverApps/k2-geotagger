@@ -1,6 +1,6 @@
 <?php
 /*	
-*	Geotagger for Joomla
+*	Geotagger for K2
 *	(c) 2012-2014 Weever Apps Inc. <http://www.weeverapps.com/>
 *
 *	Authors: 	Robert Gerald Porter <rob@weeverapps.com>
@@ -21,7 +21,6 @@
 *   GNU General Public License for more details <http://www.gnu.org/licenses/>.
 *
 */
-
 
 ?>
 

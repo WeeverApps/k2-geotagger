@@ -22,6 +22,9 @@
 *
 */
 
+
+defined('_JEXEC') or die;
+
 	// NOTE - I'm not sure how you'll be able to get the post in Joomla.
 	// Aaron/Rob, you'll have to look at this.
 	//global $settings;
