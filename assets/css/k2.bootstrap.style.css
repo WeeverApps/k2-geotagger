@@ -55,5 +55,5 @@
 }
 
 .screen-reader-text, #geotagger-about {
-	display: none;
+	display: none !important;
 }

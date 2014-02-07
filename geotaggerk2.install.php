@@ -22,20 +22,46 @@
 *
 */
 
-class plgK2GeotaggerK2InstallerScript
-{ 
+class plgK2GeotaggerK2InstallerScript { 
 
 	public function install( $parent ) 
 	{ 
 
 		$db 				= JFactory::getDbo();
-		$tableExtensions 	= $db->nameQuote("#__extensions");
-		$columnElement   	= $db->nameQuote("element");
-		$columnType      	= $db->nameQuote("type");
-		$columnEnabled   	= $db->nameQuote("enabled");
-		 
-		$db->setQuery("UPDATE $tableExtensions SET $columnEnabled=1 WHERE $columnElement='geotaggerk2' AND $columnType='plugin'");
-		$db->query();
+
+		$query = $db->getQuery(true)
+		 	->update($db->qn('#__extensions'))
+		 	->set($db->qn('enabled') . ' = ' . $db->q(1))
+		 	->where($db->qn('type') . ' = ' . $db->q('plugin'))
+		 	->where($db->qn('folder') . ' = ' . $db->q('k2'))
+		 	->where($db->qn('element') . ' = ' . $db->q('geotaggerk2'));
+		 $db->setQuery($query);
+		 $db->execute();
+
+
+		$query = $db->getQuery(true)
+		 	->select('*')
+		 	->from($db->qn('#__extensions'))
+		 	->where($db->qn('type') . ' = ' . $db->q('plugin'))
+		 	->where($db->qn('enabled') . ' = ' . $db->q('1'))
+		 	->where($db->qn('folder') . ' = ' . $db->q('k2'))
+		 	->where($db->qn('element') . ' = ' . $db->q('weevermapsk2'));
+		$db->setQuery($query);
+		$enabled_plugins = $db->loadObjectList();
+
+		// disabling old plugin
+		if( isset($enabled_plugins[0]) ) {
+
+			 $query = $db->getQuery(true)
+			 	->update($db->qn('#__extensions'))
+			 	->set($db->qn('enabled') . ' = ' . $db->q(0))
+			 	->where($db->qn('type') . ' = ' . $db->q('plugin'))
+			 	->where($db->qn('folder') . ' = ' . $db->q('k2'))
+			 	->where($db->qn('element') . ' = ' . $db->q('weevermapsk2'));
+			$db->setQuery($query);
+			$db->execute();
+
+		}
 		  
 	} 
   

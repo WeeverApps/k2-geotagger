@@ -28,8 +28,6 @@
 		call_user_func( CMS . '_before_geolocation_form' );
 	}*/
 
-	$url = "http://weeverapp.com/media/sprites/default-marker.png";
-
 ?>
 <div id="wx-geotagger-form">
 
@@ -70,13 +68,13 @@
 		//	$url = $settings->pin_url;
 		//}
 		?>
-		<input type="text" id="geolocation-pin" name="geolocation-pin" placeholder="http://site.com/marker.png" value="<?php echo $url; ?>" />
+		<input type="text" id="geolocation-pin" name="geolocation-pin" placeholder="http://site.com/marker.png" value="<?php echo $this->marker_url; ?>" />
 	</div>
 	<br>
 
 	<div id="kml-settings" class="geotagger-info">
 		<div>KML file address (advanced)</div>
-		<input type="text" id="geolocation-url" name="geolocation-url" placeholder="http://site.com/file.kml" value="<?php /*echo get_post_meta($post->ID, 'weever_kml', true); TODO: Cross-platform method for this.*/ ?>" />
+		<input type="text" id="geolocation-url" name="geolocation-url" placeholder="http://site.com/file.kml" value="<?php echo $this->kml_url; ?>"<?php /*echo get_post_meta($post->ID, 'weever_kml', true); TODO: Cross-platform method for this.*/ ?> />
 	</div>
 
 	<br>

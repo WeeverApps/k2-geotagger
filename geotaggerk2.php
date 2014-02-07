@@ -42,6 +42,8 @@ class plgK2GeotaggerK2 extends K2Plugin {
 	public		$pluginLongVersion 			= "Version 1.0 \"Leif Ericson\"";
 	public  	$pluginReleaseDate 			= "February 6, 2014";
 	public  	$joomlaVersion;
+	public 		$marker_url;
+	public 		$default_marker_url;
 	
 	private		$geoData 					= null;
 	private		$inputString				= array(
@@ -84,15 +86,28 @@ class plgK2GeotaggerK2 extends K2Plugin {
 
 		}
 
+		$this->default_marker_url = $root_url . "/plugins/k2/geotaggerk2/assets/images/default-marker.png";
+
+		if( isset($this->geoData[0]) && $this->geoData[0]->marker ) {
+
+			$this->marker_url = $this->geoData[0]->marker;
+
+		} else $this->marker_url = $this->default_marker_url;
+
+		if( isset($this->geoData[0]) && $this->geoData[0]->kml ) {
+
+			$this->kml_url = $this->geoData[0]->kml;
+
+		}
+
 		$jsMetaVar		= "var meta = " . $this->getJsMetaVar();
-		
 
 		$jsFormInsert	= "
 
 			/* some dancing around for jQuery UI in K2 */
 			var tabLength = \$j('#k2Tabs ul.simpleTabsNavigation li').length;
 
-			\$j('<li id=\"tabGeotagger\" class=\"ui-state-default ui-corner-top\"><a href=\"#k2Tab' + tabLength + '\" id=\"k2TabGeotaggerA\">Geotagger</a></li>').appendTo('#k2Tabs ul.simpleTabsNavigation');
+			\$j('<li id=\"tabGeotagger\" class=\"ui-state-default ui-corner-top\"><a href=\"#k2Tab' + tabLength + '\" id=\"k2TabGeotaggerA\" style=\"background-image: url(". $root_url . "/plugins/k2/geotaggerk2/assets/images/marker.png);background-position:4px 3px;background-repeat: no-repeat;background-size:15px;\">Geotagger</a></li>').appendTo('#k2Tabs ul.simpleTabsNavigation');
 
 			\$j('<div id=\"k2Tab'+ tabLength +'\" class=\"simpleTabsContent ui-tabs-panel ui-widget-content ui-corner-bottom ui-tabs-hide\"></div>').appendTo('#k2Tabs' ); 
 
@@ -105,9 +120,17 @@ class plgK2GeotaggerK2 extends K2Plugin {
 				if( \$j(this).attr(\"href\") == \"#k2Tab\" + tabLength ) {
 
 					\$j(\"div.simpleTabsContent\").addClass('ui-tabs-hide');
+					\$j(\"div#k2Tabs ul li\").removeClass('ui-state-active').removeClass('ui-tabs-selected');
+
 					\$j(\"#k2Tab\" + tabLength ).removeClass('ui-tabs-hide');
+					\$j('#tabGeotagger').addClass('ui-state-active').addClass('ui-tabs-selected');
 					
-				} else \$j(\"#k2Tab\" + tabLength).addClass('ui-tabs-hide');
+				} else {
+
+					\$j(\"#k2Tab\" + tabLength).addClass('ui-tabs-hide');
+					\$j('#tabGeotagger').removeClass('ui-state-active').removeClass('ui-tabs-selected');
+
+				} 
 
 				google.maps.event.trigger( \$geotagger.map,'resize' );
 				\$geotagger.map.setCenter( \$geotagger.center );
@@ -218,6 +241,24 @@ class plgK2GeotaggerK2 extends K2Plugin {
 	
 		$db->setQuery($query);
 		$db->query();
+
+		if( JRequest::getVar("geolocation-on") == 0 )
+			return;
+
+		if( $kml = rtrim( JRequest::getVar("geolocation-url"), $_ds) )	{
+			
+			$query = " 	INSERT  ".
+					"	INTO	#__weever_maps ".
+					"	(component_id, component, kml) ".
+					"	VALUES ('".$item->id."', 'com_k2', ".$db->quote($kml).")";
+			
+			$db->setQuery($query);
+			$db->query();
+
+		}
+
+		if( ( $geoLatArray[0] == 0 && $geoLongArray[0] == 0 ) )
+			return; 
 		
 		foreach( (array) $geoLatArray as $k=>$v )
 		{
@@ -234,18 +275,6 @@ class plgK2GeotaggerK2 extends K2Plugin {
 			$db->setQuery($query);
 			$db->query();
 		
-		}
-		
-		if( $kml = rtrim( JRequest::getVar("geolocation-url"), $_ds) )	{
-			
-			$query = " 	INSERT  ".
-					"	INTO	#__weever_maps ".
-					"	(component_id, component, kml) ".
-					"	VALUES ('".$item->id."', 'com_k2', ".$db->quote($kml).")";
-			
-			$db->setQuery($query);
-			$db->query();
-
 		}
 		
 	

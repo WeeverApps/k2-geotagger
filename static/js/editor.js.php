@@ -37,12 +37,16 @@ $zoom = 16;
 		 	var $j 				= jQuery.noConflict(),
 		 		$geotagger 		= {
 
-		 			map: 		null,
-		 			center: 	new google.maps.LatLng(0.0,0.0)
+		 			map: 				null,
+		 			center: 			new google.maps.LatLng(0.0,0.0),
+		 			kml: 				null,
+		 			markerUrl: 			'<?php echo $this->marker_url; ?>',
+		 			defaultMarkerUrl: 	'<?php echo $this->default_marker_url; ?>'
 
 		 		};
 
 			$j(function() {
+
 				$j(document).ready(function() {
 
 					<?php echo $jsFormInsert; /* only has value if form needs to be inserted with JS */ ?>
@@ -51,6 +55,19 @@ $zoom = 16;
 					var on = 0;
 					var latitude = null, longitude = null;
 					<?php echo $jsMetaVar; ?>;
+
+					console.log( meta );
+
+					$geotagger.addKmlLayer = function( url ) {
+
+						if( $geotagger.kml instanceof google.maps.KmlLayer )
+							$geotagger.kml.setMap(null);
+
+						$geotagger.kml = new google.maps.KmlLayer({ url: url });
+							
+						$geotagger.kml.setMap( $geotagger.map );
+
+					}
 					
 					//if(meta.public == '0')
 					//	$j("#geolocation-public").attr('checked', false);
@@ -61,70 +78,96 @@ $zoom = 16;
 						disableGeo();
 					else
 						enableGeo();
-
-					console.log( meta.geo );
 					
 					if( $j.isArray(meta.geo) && !!meta.geo[0] ) {
-						longitude = meta.geo[0].longitude;
-						latitude = meta.geo[0].latitude;
-						$geotagger.center = new google.maps.LatLng(meta.geo[0].latitude, meta.geo[0].longitude);
-						hasLocation = true;
+
+						longitude 			= meta.geo[0].longitude;
+						latitude 			= meta.geo[0].latitude;
+						$geotagger.center 	= new google.maps.LatLng( meta.geo[0].latitude, meta.geo[0].longitude );
+						hasLocation 		= true;
+
 						$j("#geolocation-latitude").val($geotagger.center.lat());
 						$j("#geolocation-longitude").val($geotagger.center.lng());
 						$j('#latlng').text( $geotagger.center.lat() + ', ' + $geotagger.center.lng() );
 						reverseGeocode($geotagger.center);
+
 					}
 						
-				 	var myOptions = {
-				      'zoom': <?php echo $zoom; ?>,
-				      'center': $geotagger.center,
-				      'mapTypeId': google.maps.MapTypeId.ROADMAP
+				 	var myOptions 	= {
+
+				      'zoom': 			<?php echo $zoom; ?>,
+				      'center': 		$geotagger.center,
+				      'mapTypeId': 		google.maps.MapTypeId.ROADMAP
+
 				    };
-				    var image = '<?php echo $settings->pin_url; ?>';
 
 				    var markerIcon = new google.maps.MarkerImage(
 
-		                image,
+		                $geotagger.markerUrl,
 		                new google.maps.Size(32, 37),
 		                new google.maps.Point(0,0),
 		                new google.maps.Point(16, 37),
 		                new google.maps.Size(64, 37)
 
 		           );
+
 				   /* var shadow = new google.maps.MarkerImage('<?php echo $settings->pin_shadow_url; ?>',
 						new google.maps.Size(39, 23),
 						new google.maps.Point(0, 0),
 						new google.maps.Point(12, 25));*/
 						
-				    $geotagger.map = new google.maps.Map(document.getElementById('geolocation-map'), myOptions);
+				    $geotagger.map 	= new google.maps.Map(document.getElementById('geolocation-map'), myOptions);
 
-					var marker = new google.maps.Marker({
+					var marker 		= new google.maps.Marker({
 
-						position: $geotagger.center, 
-						map: $geotagger.map, 
-						title:'Post Location',
-						icon: markerIcon
+						position: 		$geotagger.center, 
+						map: 			$geotagger.map, 
+						title: 			'Post Location',
+						icon: 			markerIcon
 	
 					});
-					
-					if((!hasLocation) && (google.loader.ClientLocation)) {
 
-				      $geotagger.center = new google.maps.LatLng(google.loader.ClientLocation.latitude, google.loader.ClientLocation.longitude);
+					if( !!meta.geo[0] && meta.geo[0].kml ) {
+
+						$geotagger.addKmlLayer( meta.geo[0].kml );
+
+					}
+
+					/*if( (!hasLocation) && (google.loader.ClientLocation) ) {
+
+				      $geotagger.center 	= new google.maps.LatLng(google.loader.ClientLocation.latitude, google.loader.ClientLocation.longitude);
+
 				      reverseGeocode($geotagger.center);
 
-				    }
-				    else if(!hasLocation) {
+				    } else */if(!hasLocation) {
 
-				    	$geotagger.map.setZoom(1);
+				    	$geotagger.map.setZoom(2);
 
 				    }
 					
-					google.maps.event.addListener($geotagger.map, 'click', function(event) {
-						placeMarker(event.latLng);
+					google.maps.event.addListener( $geotagger.map, 'click', function(event) {
+						
+						placeMarker( event.latLng );
+
 					});
 					
 					var currentAddress;
 					var customAddress = false;
+
+					$j('#geolocation-url').bind('keyup paste', function(e) {
+
+						// prevent double jeopardy
+						clearTimeout( $j(this).data('timeout') );
+
+						$j(this).data('timeout', setTimeout( function() {
+										
+							$geotagger.addKmlLayer( $j('#geolocation-url').val() );
+
+						}, 200));
+					
+					});
+
+
 					$j("#geolocation-address").click(function(){
 						currentAddress = $j(this).val();
 						if(currentAddress != '')
@@ -152,10 +195,24 @@ $zoom = 16;
 						disableGeo();
 					});
 
-					$j("#geolocation-pin").change(function() {
-						image = $j("#geolocation-pin").val();
-						$j("#geolocation-pin-img").attr('src', image);
-						marker.setIcon(image);
+					$j("#geolocation-pin").change( function() {
+
+						image = $j("#geolocation-pin").val() || $geotagger.defaultMarkerUrl;
+
+						marker.setIcon(
+
+							new google.maps.MarkerImage(
+
+								image,
+								new google.maps.Size(32, 37),
+								new google.maps.Point(0,0),
+								new google.maps.Point(16, 37),
+								new google.maps.Size(64, 37)
+
+							)
+
+				        );
+
 					});
 
 					function placeMarker(location) {
